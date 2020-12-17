@@ -1,0 +1,15 @@
+Package: 
+Version: 0.0.0.9900
+Title: Spotify EDA
+Author: Andrew Proulx
+Maintainer: Andrew Proulx <aproulx@ucmerced.edu>
+Depends: R (>= 4.0.0)
+Description: Spotify music analysis finding highest correlation to track popularity.
+License: 
+imports:
+  tidyverse,
+  dplyr,
+  ggplot2,
+  lubridate,
+  tinytex,
+  knitr

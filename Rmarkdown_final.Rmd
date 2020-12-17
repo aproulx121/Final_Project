@@ -1,0 +1,135 @@
+---
+title: "Spotify Song EDA"
+author: "Andrew Proulx"
+date: "12/16/2020"
+output: html_document
+abstract: Spotify music data has been taken and investigated to understand the relationship between certain variables.  Track popularity has been found to be most highly correlated with acousticness, loudness, danceability, and valence.  We have also displayed numerous plots regarding relationships between variables such as valence, release date, tempo, energy, danceability, instrumentalness, and genre.
+---
+
+# **Introduction** #
+  What makes a song popular? Is it valence, energy, danceability, genre? The data collected allows us to investigate about 33000 spotify songs ranked in popularity and other variables similar to the ones mentioned above. To begin, it would serve the reader to have define the variables in play.  I will only describe the variables which had a correlation or that were included in the plots.
+  
+  Danceability (0-1) : Based on a combination of elements including tempo, rhythm stability, beat strength, and regularity, this    variable rates how suitable a track is for dancing.
+  
+  Energy (0-1) : Represents perceived intensity and activity, with a more energetic track feeling fast, loud and noisy.
+  
+  Loudness (dB) : Quality of sound that is the psychological correlate of amplitude.
+  
+  Mode : Major or minor of track.
+  
+  Acousticness : confidence measure if a track is acoustic, with 1 being high confidence.
+  
+  Instrumentalness : predicts whether a track has no vocals.
+  
+  Valence : Measure of 0-1 that predicts positiveness of a track. High valence is happy, cheerful, euphoric, while low valence is   sadness, depression, or anger.
+  
+  Tempo : Overall estimated beats per minute (BPM).
+  
+  Playlist genre : is the genre the song is placed under. This could create some discrepancies as some songs may be listed under an inaccurate genre. There are also duplicate songs that are in different playlists and playlist genres.
+  
+  Song popularity : 0-100 where higher is better.
+  
+We have predicted valence and danceability to be the main factors correlated with song popularity.  While we were correct, with these two being in the top four, there were two other variables that were more highly correlated. These were acousticness and loudness.
+  
+# **DATA** #
+```{r, include=FALSE, echo=FALSE}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(tinytex)
+library(knitr)
+dataf = readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-21/spotify_songs.csv')
+dataf_smol = select(dataf, where(is.numeric), where(is.factor))
+cor_matrix = dataf_smol %>%
+  mutate(track_popularity = as.integer(track_popularity))%>%
+  cor(method = 'spearman')
+cor_df = as_tibble(cor_matrix, rownames = 'covar')
+top_10 = cor_df%>%
+  select(covar, track_popularity)%>%
+  arrange(desc(track_popularity))%>%
+  
+  top_n(10)
+
+dataf$track_album_release_date = as.Date(dataf$track_album_release_date)
+
+datafdates = dataf %>% mutate(year = year(track_album_release_date), month = month(track_album_release_date), day = day(track_album_release_date))
+```
+
+### Summary of the Data
+```{r, echo=FALSE}
+skimr::skim(dataf)
+```
+
+### Chart of the top 10 correlations
+```{r, echo=FALSE}
+top_10
+```
+
+### Plot of track popularity vs. genre
+```{r, echo=FALSE}
+ggplot(dataf, aes(x = playlist_genre, y = track_popularity)) + geom_boxplot()
+```
+
+### Plot of track popularity vs. energy
+```{r echo=FALSE}
+ggplot(dataf, aes(x = energy, y = track_popularity)) + geom_point(size =.1) + geom_smooth()
+```
+
+### Plot of track popularity vs. danceability
+```{r, echo=FALSE}
+ggplot(dataf, aes(x = danceability, y = track_popularity)) + geom_point(size =.1) + geom_smooth()
+```
+
+### Plot of track popularity vs. valence
+```{r, echo=FALSE}
+ggplot(dataf, aes(x = valence, y = track_popularity)) + geom_point(size =.1) + geom_smooth()
+```
+
+### Plot of valence vs. danceability
+```{r, echo=FALSE}
+ggplot(dataf, aes(x = danceability, y = valence)) + geom_point(size =.1) + geom_smooth()
+```
+
+### Plot of danceability vs. genre
+```{r, echo=FALSE}
+ggplot(dataf, aes(x = playlist_genre, y = danceability)) + geom_boxplot()
+```
+
+### Plot of valence vs. genre
+```{r, echo=FALSE}
+ggplot(dataf, aes(x = playlist_genre, y = valence)) + geom_boxplot()
+```
+
+### Plot of valence vs.year release date
+```{r, echo=FALSE}
+ggplot(datafdates %>% filter(year>1979) %>% group_by(year) %>% summarise(y = mean(valence)), aes(x = year, y = y)) + geom_line() + ylab("valence")
+```
+
+### Plot of loudness vs. year release date
+```{r, echo=FALSE}
+ggplot(datafdates %>% filter(year>1979) %>% group_by(year) %>% summarise(y = mean(loudness)), aes(x = year, y = y)) + geom_line() + ylab("loudness")
+```
+
+### Plot of track popularity vs. release date
+``` {r, echo=FALSE}
+ggplot(datafdates %>% filter(year>1979) %>% group_by(year) %>% summarise(y = mean(track_popularity)), aes(x = year, y = y)) + geom_line() + ylab("track_pop")
+```
+
+# **RESULTS** #
+  The first chart of data shows that the top four variables with the highest correlation to track popularity are acousticness, loudness, danceability, and valence.The genres were all very similar in popularity, with pop slightly on top and edm being the lowest.  Track popularity seemed to decrease with energy higher than .75.  danceability was positively correlated with track popularity.  It seems valence was only somewhat correlated with track popularity, with the peak being at .50 valence, where songs are not too sad or too happy.  The lowest popularity correlated with under .25 valence. 
+  
+  Valence was positively correlated with danceability. The most danceable genre was rap, followed closely by latin and r&b.  Rock was the least danceable.
+  
+  Latin and rock had the highest average valence, with edm being the lowest.
+  
+  Over time since 1980, drastically dropping in 2010, valence decreased from .6 to.43, and began rising again in 2014.Loudness decreased in the 80's but increased and began to level out and drop in 2020.Track popularity was highest in 1980 and 2019, and was lowest in 2008.
+  
+# **Discussion** #
+  I did not expect acousticness to be the most correlated with popularity, as I beleived pop or rap music to be the most popular. However, looking at the entire population and not just my age group, it makes sense for acoustic to be the most popular.  Loudness was an interesting correlate of popularity which might not much value in our investigation.  Danceability and valence were hypothesized to be the most correlated, and they came number three and four, respectively.  It seems most people like music they can move with and that puts them in a good mood.  However, sad, emotional songs also have their place, so high postive valence isn't all that matter.  
+  
+  Valence and danceability being correlated with each other also makes sense as dancing to more depressing songs is not as enjoyable or easy. Usually danceable music is cheerful and makes you feel good.
+  
+  It was interesting to see that over time, valence has decreased and loudness increased. These are predicable results, as society seems to have gotten a bit darker and gone through rough times since the 80's, as well as seems to enjoy louder music with higher quality speakers and audio available.
+  
+  Some issues with this EDA is the duplicate songs. These songs were not exact duplicates, as they were often placed in different playlist genres. This made the genre analysis possibly inaccurate. After thoroughly going through the data, I decided to keep them in because many of the duplicate songs were placed in similar genres, and I felt it added some accuracy to the data.
